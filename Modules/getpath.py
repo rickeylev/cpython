@@ -374,10 +374,13 @@ if not py_setpath:
             # If PYTHONHOME was set, ignore 'home' from pyvenv.cfg.
             if home:
                 break
+            value = value.strip()
+            if not isabs(value):
+                value = realpath(joinpath(venv_prefix, value))
             # Override executable_dir/real_executable_dir with the value from 'home'.
             # These values may be later used to calculate prefix/base_prefix, if a more
             # reliable source — like the runtime library (libpython) path — isn't available.
-            executable_dir = real_executable_dir = value.strip()
+            executable_dir = real_executable_dir = value
             # If base_executable — which points to the Python interpreted from
             # the base installation — isn't set (eg. when embedded), try to find
             # it in 'home'.

@@ -354,6 +354,42 @@ class MockGetPathTests(unittest.TestCase):
         actual = getpath(ns, expected)
         self.assertEqual(expected, actual)
 
+    def test_venv_relative_home(self):
+        ns = MockPosixNamespace(
+            argv0="/somedir/venv/bin/python3",
+            PREFIX="/usr/local-fallback",
+            ENV_PATH="/usr/bin",
+        )
+
+        ns.add_known_xfile("/somedir/runtime/bin/python3")
+        ns.add_known_file("/somedir/runtime/lib/python9.8/os.py")
+        ns.add_known_dir("/somedir/runtime/lib/python9.8/lib-dynload")
+
+        ns.add_known_xfile("/somedir/venv/bin/python3")
+        # NOTE: Normally a relative symlink would be used, but the mock
+        # realpath() doesn't handle relative symlinks, so point it to
+        # where it ultimately would resolve to.
+        ns.add_known_link("/somedir/venv/bin/python3", "/somedir/runtime/bin/python3")
+        ns.add_known_file("/somedir/venv/pyvenv.cfg", [
+            "home = ../runtime/bin"
+        ])
+        expected = dict(
+            executable="/somedir/venv/bin/python3",
+            prefix="/somedir/venv",
+            exec_prefix="/somedir/venv",
+            base_executable="/somedir/runtime/bin/python3",
+            base_prefix="/somedir/runtime",
+            base_exec_prefix="/somedir/runtime",
+            module_search_paths_set=1,
+            module_search_paths=[
+                "/somedir/runtime/lib/python98.zip",
+                "/somedir/runtime/lib/python9.8",
+                "/somedir/runtime/lib/python9.8/lib-dynload",
+            ],
+        )
+        actual = getpath(ns, expected)
+        self.assertEqual(expected, actual)
+
     def test_venv_changed_name_posix(self):
         "Test a venv layout on *nix."
         ns = MockPosixNamespace(
